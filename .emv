@@ -1,0 +1,1 @@
+DB_CONNECTION=mongodb+srv://ritish:PHxQVVMIqf4SFhTN@login-app.hzfkt.mongodb.net/login-app?retryWrites=true&w=majority

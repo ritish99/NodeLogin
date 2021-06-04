@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Login</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+	</head>
+	<body>
+	<div class="container">
+		<h1>Login</h1>
+		<form id="login">
+			<div class="form-group">
+				<label for="username" class="form-label">Username</label>
+				<input type="text" class="form-control" name ="username" id="username">	
+			</div>
+
+			<div class="form-group">
+				<label for="password" class="form-label">Password</label>
+				<input type="password" class="form-control" name ="password" id="password">
+			</div>
+			<input type="submit"class="btn btn-primary" value="Submit Form" />
+		</form>
+
+		<script>
+			let token = window.localStorage.getItem('jwt');
+			const username = window.localStorage.getItem('username');
+
+			if(token){
+				// let payload = jwt.verify(token, )
+				const tokenResult = fetch('/api/validateToken', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						username,
+						token
+					})
+				}).then((res) => res.json())
+			}
+
+			const form = document.getElementById('login')
+			form.addEventListener('submit', loginUser)
+
+			async function loginUser(event) {
+				event.preventDefault()
+				const username = document.getElementById('username').value
+				const password = document.getElementById('password').value
+
+				const result = await fetch('/api/login', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						username,
+						password
+					})
+				}).then((res) => res.json())
+
+				if(result.status === 'ok'){
+					//everything went fine
+					window.localStorage.setItem('username',username);
+					window.localStorage.setItem('jwt', result.data);
+					console.log('Got the token: ', result.data);
+					window.location.assign("http://localhost:3000/index.html");
+				}
+				else{
+					alert(result.error);
+				}
+			}
+		</script>
+	</div>
+	</body>
+</html>
