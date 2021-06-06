@@ -8,6 +8,7 @@ const { response } = require('express');
 require('dotenv').config({ path: './.emv' });
 const jwt = require('jsonwebtoken');
 const session = require('express-session');
+const { nextTick } = require('process');
 const store = new session.MemoryStore();
 const router = new express.Router();
 
@@ -59,17 +60,13 @@ app.post('/api/login', async (req, res) => {
 
 	if(await bcrypt.compare(password, user.password)){
 		//combination was successful
-		const token = jwt.sign({ id:user._id, username: user.username}, JWT_SECRET);
-		// console.log(user)
-		const userTokenResult = await User.findByIdAndUpdate(user._id, {"userToken":token}, function(err, result){
-			if(err){
-
-			}
-			else{
-				return res.json({ status: 'ok', data: token, user:username}); 
-				//render next page (web chat) admin admin123
-			}
-		});	
+		const time = 3 * 24 * 60 * 60; //3 days in seconds
+		const token = jwt.sign({ id:user._id }, JWT_SECRET, {
+			expiresIn: time
+		});
+		
+		return res.json({ status: 'ok', data: token, user:username}); 
+		//render next page (web chat) admin admin123		
 	}
 	else{
 		res.json({ status: 'error', error: 'Invalid information' });
@@ -85,26 +82,31 @@ app.get('/login', function(req,res){
 });
 
 // https://livecodestream.dev/post/a-practical-guide-to-jwt-authentication-with-nodejs/
-app.post('/api/validateToken', (req, res) => {
-	// let token = req.body.token;
-	// let username = req.body.username;
-	// const user = User.findOne({ username }).lean();
-	// console.log(user)
-	// if(!user){
-	// 	return res.json({ status: 'error', error: 'Invalid information' });
-	// }
-	// else{
-	// 	// console.log(user.userToken);
-	// }
-
+app.post('/api/validateToken', async (req, res) => {
+	let token = req.body.token;
+	if(token){
+		jwt.verify(token, JWT_SECRET, (err, decodedToken) => {
+			//Invalid or errors
+			if(err){
+				// console.log(err.message);
+				return res.json({ status: 'invalidToken'}); 
+			}
+			//Valid token
+			else{
+				return res.json({ status: 'ok'}); 
+				// console.log(decodedToken);
+			}
+		});
+	}
 });
+
+
 
 app.post('/api/register', async (req, res) => {
 	console.log(req.body);
 	res.json({ status: 'ok' });
 
 	const { username, password: plaintTextPassword } = req.body; 
-
 
 	if(!username || typeof username !== 'string'){
 		return res.json({status: 'error', error: 'Invalid username'});
@@ -133,9 +135,6 @@ app.post('/api/register', async (req, res) => {
 	}
 	throw error;
 });
-
-
-
 
 app.listen(3000, () => {
 	console.log('Server up at 3000');

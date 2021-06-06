@@ -4,9 +4,39 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Document</title>
+		<script>
+			validateTokenFunc();
+			async function validateTokenFunc(event) {
+				let token = window.localStorage.getItem("jwt");
+				if (token) {
+					const tokenResult = await fetch("/api/validateToken", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							token,
+						}),
+					}).then((res) => res.json());
+	
+					if (tokenResult.status === "invalidToken") {
+						window.location.assign("http://localhost:3000/login.html");	
+					}
+				}
+				else{
+					window.location.assign("http://localhost:3000/login.html");
+				}
+			}
+		</script>
 	</head>
 	<body>
 		<h1>main</h1>
-		<script></script>
+		<button onclick="logout()">Log out</button>
+		<script>
+			function logout(){
+				window.localStorage.setItem("jwt", "");
+				window.location.assign("http://localhost:3000/login.html");
+			}
+		</script>
 	</body>
 </html>
